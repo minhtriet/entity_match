@@ -2,7 +2,9 @@ extern crate serde;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Error;
-use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::{BufReader};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Article {
@@ -11,17 +13,19 @@ struct Article {
     id: String,
 }
 
-fn another() -> Result<Article, Error> {
-    let data = r#"
-        { "url": "John Doe", "text": "43", "id": "+44 1234567" }"#;
+fn another(data: &str) -> Result<Article, Error> {
     let a: Article = serde_json::from_str(data)?;
     Ok(a)
 }
 
 fn main() {
-    let article = another().unwrap_or_else(|error| {
-        panic!("invalid JSON");
-    });
-    println!("{}", article.url);
+     let file = File::open("data/test").unwrap();
+     let reader = BufReader::new(file);
+     for line in reader.lines() {
+         let json = another(&line.unwrap()).unwrap_or_else(|error| {
+             panic!("invalid JSON");
+         });
+         println!("{}", json.text)
+     }
 }
 
