@@ -8,6 +8,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::{BufReader};
 
+const NER_SERVER: &'static str = "127.0.0.1:5000/parse";
+
 #[derive(Serialize, Deserialize, Debug)]
 struct Article {
     url: String,
@@ -20,13 +22,6 @@ struct Article {
 //
 
 impl Article {
-
-    pub fn entities(client: Client, link: &str) {
-        // Send sentence to `link`, return a list of entities span
-        client.post("www.google.com");
-    }
-    // write function
-
     // Deserialize magic??
 }
 
@@ -37,12 +32,15 @@ fn another(data: &str) -> Result<Article, Error> {
 
 fn run() -> Result<u64, Box<Error>> {
     let file = File::open("data/test").unwrap();
+    let client = reqwest::blocking::Client::new();
     let reader = BufReader::new(file);
     let mut count : u64 = 0;
     for line in reader.lines() {
         let article: Article = serde_json::from_str(&line.unwrap_or_default())?;
+        client.post(NER_SERVER)
+            .json(&format!("data={}", article.text))
+            .send(); // TODO change to async
         count += 1;
-        println!("{}", article.text)
     }
     Ok(count)
 }
